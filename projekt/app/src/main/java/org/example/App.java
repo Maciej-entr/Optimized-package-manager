@@ -1,5 +1,9 @@
 package org.example;
 
+import org.example.MyPackage;
+import org.example.MyContainer;
+import org.example.PackingSimulator;
+
 import java.util.Scanner;
 
 public class App {
@@ -71,7 +75,7 @@ public class App {
             double height = getDimension("Height", MAX_HEIGHT);
             double depth = getDimension("Depth", MAX_DEPTH);
 
-            simulator.addPackage(new Package("PKG-" + (i + 1), width, height, depth));
+            simulator.addPackage(new MyPackage("PKG-" + (i + 1), width, height, depth));
         }
 
         simulator.runSimulation();
@@ -113,7 +117,7 @@ public class App {
 
         System.out.println("\n=== Detailed Statistics ===");
 
-        for (Container container : simulator.getContainers()) {
+        for (MyContainer container : simulator.getContainers()) {
             System.out.printf("Container %s (%.2fm x %.2fm x %.2fm, Volume: %.2f m³):\n",
                     container.getId(),
                     container.getWidth(),
@@ -123,7 +127,7 @@ public class App {
 
             System.out.printf("  Utilization: %.2f%%\n", container.getUtilization());
             System.out.println("  Packages inside:");
-            for (Package pkg : container.getPackages()) {
+            for (MyPackage pkg : container.getPackages()) {
                 System.out.printf("    - %s (%.2fm x %.2fm x %.2fm, Volume: %.2f m³)\n",
                         pkg.getId(),
                         pkg.getWidth(),
@@ -136,7 +140,7 @@ public class App {
 
         if (!simulator.getPendingPackages().isEmpty()) {
             System.out.println("Unpacked Packages:");
-            for (Package pkg : simulator.getPendingPackages()) {
+            for (MyPackage pkg : simulator.getPendingPackages()) {
                 System.out.printf("  - %s (%.2fm x %.2fm x %.2fm, Volume: %.2f m³)\n",
                         pkg.getId(),
                         pkg.getWidth(),

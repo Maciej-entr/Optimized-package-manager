@@ -14,6 +14,11 @@ public class PackingSimulator {
     private final double containerHeight;
     private final double containerDepth;
 
+    // Default container size
+    public PackingSimulator() {
+        this(2.0, 3.0, 5.0);
+    }
+
     public PackingSimulator(double width, double height, double depth) {
         this.containerWidth = width;
         this.containerHeight = height;
@@ -26,7 +31,7 @@ public class PackingSimulator {
 
         for (Package pkg : toProcess) {
             Container bestFit = containers.stream()
-                .filter(c -> c.canFit(pkg))
+                .filter(c -> c.canAccommodate(pkg))
                 .min(Comparator.comparingDouble(Container::getRemainingVolume))
                 .orElse(null);
 

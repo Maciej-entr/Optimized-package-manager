@@ -1,11 +1,11 @@
-package org.example;
+package main.java.org.example;
 import java.util.ArrayList;
 
 /**
  * Represents a single package with dimensions and ID.
  * Immutable after construction.
  */
-public class Package {
+public class MyPackage {
     private final String id;
     private final double width;
     private final double height;
@@ -15,7 +15,7 @@ public class Package {
      * Constructs a package with the specified ID and dimensions.
      * All dimensions must be positive and finite.
      */
-    public Package(String id, double width, double height, double depth) {
+    public MyPackage(String id, double width, double height, double depth) {
         if (width <= 0 || height <= 0 || depth <= 0 ||
             Double.isNaN(width) || Double.isNaN(height) || Double.isNaN(depth) ||
             Double.isInfinite(width) || Double.isInfinite(height) || Double.isInfinite(depth)) {
