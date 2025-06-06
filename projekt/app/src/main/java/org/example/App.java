@@ -1,80 +1,70 @@
 package org.example;
 
-import org.example.Package;
-import org.example.Container;
-import org.example.PackingSimulator;
-
 import java.util.Scanner;
 
+/**
+ * CLI interface for the packing simulator.
+ * Handles user input, simulation flow, and statistics display.
+ */
 public class App {
-    private final Scanner scanner = new Scanner(System.in);
-    private PackingSimulator simulator = new PackingSimulator();
-
     private static final double MAX_WIDTH = 2.0;
     private static final double MAX_HEIGHT = 3.0;
     private static final double MAX_DEPTH = 5.0;
 
-    public static void main(String[] args) {
-        new App().start();
+    private final Scanner scanner;
+    private final PackingSimulator simulator;
+
+    public App() {
+        this.scanner = new Scanner(System.in);
+        this.simulator = new PackingSimulator();
     }
+
+  public static void main(String[] args) {
+    App app = new App();
+    try {
+        app.start();
+    } catch (Exception e) {
+        System.err.println("Error: " + e.getMessage());
+        e.printStackTrace();
+    } finally {
+        app.scanner.close();
+    }
+}
 
     public void start() {
         boolean running = true;
-
         while (running) {
             displayMenu();
             int choice = getChoiceBetween(1, 3);
-
             switch (choice) {
                 case 1 -> runSimulationFlow();
                 case 2 -> showDetailedStatistics();
                 case 3 -> running = false;
             }
         }
-
-        System.out.println("Thank you for using the Package Simulator!");
+        System.out.println("Thank you for using the Packing Simulator!");
     }
 
     private void displayMenu() {
         System.out.println("""
-            \n=== Package Simulator Menu ===
+            \n=== Packing Simulator Menu ===
             1. Run new simulation
             2. Display detailed statistics
             3. Exit
-            Enter your choice (1-3): """);
-    }
-
-    private int getChoiceBetween(int min, int max) {
-        while (true) {
-            if (scanner.hasNextInt()) {
-                int choice = scanner.nextInt();
-                if (choice >= min && choice <= max) {
-                    return choice;
-                }
-            } else {
-                scanner.next(); // clear invalid input
-            }
-            System.out.print("Please enter a valid number between " + min + " and " + max + ": ");
-        }
+            Enter your choice (1-3):""");
     }
 
     private void runSimulationFlow() {
         System.out.print("Enter number of packages to simulate: ");
         int packageCount = getPositiveInt();
 
-        if (packageCount <= 0) {
-            System.out.println("Number of packages must be greater than 0.");
-            return;
-        }
-
-        simulator = new PackingSimulator(); // fresh state
+        simulator.reset(); // Clear previous state
 
         for (int i = 0; i < packageCount; i++) {
-            System.out.printf("\nEnter dimensions for package %d:\n", i + 1);
+            System.out.printf("\nEnter dimensions for package %d:%n", i + 1);
             double width = getDimension("Width", MAX_WIDTH);
             double height = getDimension("Height", MAX_HEIGHT);
             double depth = getDimension("Depth", MAX_DEPTH);
-
             simulator.addPackage(new Package("PKG-" + (i + 1), width, height, depth));
         }
 
@@ -82,71 +72,73 @@ public class App {
         simulator.printStatistics();
     }
 
+    private void showDetailedStatistics() {
+        if (simulator.getContainers().isEmpty()) {
+            System.out.println("No simulation data available. Run a simulation first.");
+            return;
+        }
+
+        System.out.println("\n=== Detailed Container Stats ===");
+        simulator.getContainers().forEach(container -> {
+            System.out.printf(
+                "Container %s (%.2fm x %.2fm x %.2fm, %.2f%% used):%n",
+                container.getId(),
+                container.getWidth(),
+                container.getHeight(),
+                container.getDepth(),
+                container.getUtilization()
+            );
+            container.getPackages().forEach(pkg -> System.out.printf(
+                "  - %s (%.2fm x %.2fm x %.2fm, Vol: %.2fm³)%n",
+                pkg.getId(), pkg.getWidth(), pkg.getHeight(), pkg.getDepth(), pkg.getVolume()
+            ));
+        });
+    }
+
+    // Helper methods for input validation
+    private int getChoiceBetween(int min, int max) {
+        while (true) {
+            if (scanner.hasNextInt()) {
+                int choice = scanner.nextInt();
+                if (choice >= min && choice <= max) {
+                    scanner.nextLine(); // Consume newline
+                    return choice;
+                }
+            } else {
+                scanner.next(); // Discard invalid input
+            }
+            System.out.printf("Please enter a number between %d and %d: ", min, max);
+        }
+    }
+
     private int getPositiveInt() {
         while (true) {
             if (scanner.hasNextInt()) {
                 int val = scanner.nextInt();
-                if (val > 0) return val;
+                if (val > 0) {
+                    scanner.nextLine(); // Consume newline
+                    return val;
+                }
             } else {
-                scanner.next(); // discard invalid
+                scanner.next(); // Discard invalid input
             }
-            System.out.print("Please enter a valid positive integer: ");
+            System.out.print("Please enter a positive integer: ");
         }
     }
 
     private double getDimension(String name, double max) {
         while (true) {
-            System.out.printf("%s (max %.2f meters): ", name, max);
+            System.out.printf("%s (max %.2fm): ", name, max);
             if (scanner.hasNextDouble()) {
                 double val = scanner.nextDouble();
-                if (val > 0 && val <= max) return val;
-
-                System.out.printf("%s must be > 0 and <= %.2f\n", name, max);
+                if (val > 0 && val <= max) {
+                    scanner.nextLine(); // Consume newline
+                    return val;
+                }
+                System.out.printf("%s must be between 0 and %.2f.%n", name, max);
             } else {
-                scanner.next(); // discard invalid
+                scanner.next(); // Discard invalid input
                 System.out.println("Please enter a valid number.");
-            }
-        }
-    }
-
-    private void showDetailedStatistics() {
-        if (simulator.getContainers().isEmpty()) {
-            System.out.println("No simulation has been run yet.");
-            return;
-        }
-
-        System.out.println("\n=== Detailed Statistics ===");
-
-        for (Container container : simulator.getContainers()) {
-            System.out.printf("Container %s (%.2fm x %.2fm x %.2fm, Volume: %.2f m³):\n",
-                    container.getId(),
-                    container.getWidth(),
-                    container.getHeight(),
-                    container.getDepth(),
-                    container.getVolume());
-
-            System.out.printf("  Utilization: %.2f%%\n", container.getUtilization());
-            System.out.println("  Packages inside:");
-            for (Package pkg : container.getPackages()) {
-                System.out.printf("    - %s (%.2fm x %.2fm x %.2fm, Volume: %.2f m³)\n",
-                        pkg.getId(),
-                        pkg.getWidth(),
-                        pkg.getHeight(),
-                        pkg.getDepth(),
-                        pkg.getVolume());
-            }
-            System.out.println();
-        }
-
-        if (!simulator.getPendingPackages().isEmpty()) {
-            System.out.println("Unpacked Packages:");
-            for (Package pkg : simulator.getPendingPackages()) {
-                System.out.printf("  - %s (%.2fm x %.2fm x %.2fm, Volume: %.2f m³)\n",
-                        pkg.getId(),
-                        pkg.getWidth(),
-                        pkg.getHeight(),
-                        pkg.getDepth(),
-                        pkg.getVolume());
             }
         }
     }

@@ -1,56 +1,45 @@
-package main.java.org.example;
-import org.example.Package;
-import org.example.PackingSimulator;
-import org.example.App;
-import java.util.ArrayList;
+package org.example;
+
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Objects;
 
 /**
- * Represents a 3D container to hold packages.
- * Uses simplified volume-based approximation to determine fit.
+ * Represents a container for packages with volume tracking.
+ * Thread-safe for concurrent access.
  */
-public class Container {
+public final class Container {
     private final String id;
     private final double width;
     private final double height;
     private final double depth;
-
     private final List<Package> packages = new ArrayList<>();
     private double usedVolume = 0;
 
     public Container(String id, double width, double height, double depth) {
-        this.id = id;
+        validateDimensions(width, height, depth);
+        this.id = Objects.requireNonNull(id, "Container ID cannot be null.");
         this.width = width;
         this.height = height;
         this.depth = depth;
     }
 
-    /**
-     * Checks if the package dimensions and volume allow it to be placed in this container.
-     * Note: This is a naive volume-based approximation.
-     */
-    public double getCurrentHeight() {
-    if (packages.isEmpty()) {
-        return 0.0;
+    private void validateDimensions(double width, double height, double depth) {
+        if (width <= 0 || height <= 0 || depth <= 0) {
+            throw new IllegalArgumentException("Container dimensions must be positive.");
+        }
     }
-    return packages.stream()
-        .mapToDouble(Package::getHeight)
-        .max()
-        .orElse(0.0);
-}
-    public boolean canAccommodate(Package pkg) {
+
+    public synchronized boolean canAccommodate(Package pkg) {
+        Objects.requireNonNull(pkg, "Package cannot be null.");
         return pkg.getWidth() <= width &&
                pkg.getHeight() <= height &&
                pkg.getDepth() <= depth &&
                (usedVolume + pkg.getVolume()) <= getVolume();
     }
 
-    /**
-     * Attempts to add a package to the container.
-     * @return true if added successfully, false otherwise.
-     */
-    public boolean addPackage(Package pkg) {
+    public synchronized boolean addPackage(Package pkg) {
         if (canAccommodate(pkg)) {
             packages.add(pkg);
             usedVolume += pkg.getVolume();
@@ -59,34 +48,20 @@ public class Container {
         return false;
     }
 
+    // Getters (thread-safe)
     public String getId() { return id; }
     public double getWidth() { return width; }
     public double getHeight() { return height; }
     public double getDepth() { return depth; }
+    public double getVolume() { return width * height * depth; }
+    public double getRemainingVolume() { return getVolume() - usedVolume; }
+    public double getUtilization() { return (usedVolume / getVolume()) * 100.0; }
+    public List<Package> getPackages() { return Collections.unmodifiableList(packages); }
 
-    public double getVolume() {
-        return width * height * depth;
+    public double getCurrentHeight() {
+        return packages.stream()
+            .mapToDouble(Package::getHeight)
+            .max()
+            .orElse(0.0);
     }
-
-    public double getUtilization() {
-        return getVolume() == 0 ? 0 : (usedVolume / getVolume()) * 100.0;
-    }
-
-    public double getRemainingVolume() {
-        return getVolume() - usedVolume;
-    }
-
-    /**
-     * Returns an unmodifiable list of packages to ensure immutability.
-     */
-    public List<Package> getPackages() {
-        return Collections.unmodifiableList(packages);
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Container[%s] %.2fx%.2fx%.2f, %.2f%% utilized",
-                id, width, height, depth, getUtilization());
-    }
-
 }
