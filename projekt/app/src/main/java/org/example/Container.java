@@ -8,7 +8,7 @@ import java.util.List;
  * Represents a 3D container to hold packages.
  * Uses simplified volume-based approximation to determine fit.
  */
-public class MyContainer {
+public class Container {
     private final String id;
     private final double width;
     private final double height;
@@ -17,7 +17,7 @@ public class MyContainer {
     private final List<Package> packages = new ArrayList<>();
     private double usedVolume = 0;
 
-    public MyContainer(String id, double width, double height, double depth) {
+    public Container(String id, double width, double height, double depth) {
         this.id = id;
         this.width = width;
         this.height = height;
