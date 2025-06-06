@@ -3,37 +3,40 @@
  */
 package org.example;
 
+// Główna klasa aplikacji - punkt wejścia do programu (w języku Java)
 import java.util.Scanner;
 
 public class App {
-    private static Scanner scanner = new Scanner(System.in);
-    private static PackingSimulator simulator = new PackingSimulator();
+    private static Scanner scanner = new Scanner(System.in); // Inicjalizacja skanera do odczytu danych wejściowych
+    private static PackingSimulator simulator = new PackingSimulator(); // Utworzenie symulatora pakowania
 
     public static void main(String[] args) {
+        // Metoda główna - start programu
         boolean running = true;
         while (running) {
-            displayMenu();
-            int choice = getValidChoice();
-            
+            displayMenu(); // Wyświetlamy menu z opcjami
+            int choice = getValidChoice(); // Pobieramy poprawny wybór użytkownika
+
             switch (choice) {
                 case 1:
-                    runNewSimulation();
+                    runNewSimulation(); // Rozpoczynamy nową symulację pakowania
                     break;
                 case 2:
-                    displayDetailedStatistics();
+                    displayDetailedStatistics(); // Wyświetlamy szczegółowe statystyki symulacji
                     break;
                 case 3:
-                    running = false;
+                    running = false; // Ustawiamy flagę, aby zakończyć pętlę i program
                     break;
                 default:
-                    System.out.println("Invalid option. Please try again.");
+                    System.out.println("Invalid option. Please try again."); // Komunikat o nieprawidłowej opcji
             }
         }
-        scanner.close();
-        System.out.println("Thank you for using the Package Simulator!");
+        scanner.close(); // Zamykamy skaner po zakończeniu programu
+        System.out.println("Thank you for using the Package Simulator!"); // Podziękowanie za korzystanie z symulatora
     }
 
     private static void displayMenu() {
+        // Metoda odpowiedzialna za wyświetlanie menu głównego programu
         System.out.println("\n=== Package Simulator Menu ===");
         System.out.println("1. Run new simulation");
         System.out.println("2. Display detailed statistics");
@@ -42,40 +45,44 @@ public class App {
     }
 
     private static int getValidChoice() {
+        // Metoda, która zapewnia, że użytkownik wprowadził liczbę
         while (!scanner.hasNextInt()) {
-            System.out.println("Please enter a valid number.");
-            scanner.next();
+            System.out.println("Please enter a valid number."); // Prośba o wprowadzenie prawidłowej liczby
+            scanner.next(); // Pomijamy nieprawidłowe dane
         }
-        return scanner.nextInt();
+        return scanner.nextInt(); // Zwrot poprawnej liczby jako wyboru
     }
 
     private static void runNewSimulation() {
+        // Metoda inicjująca nową symulację pakowania
         System.out.print("Enter number of packages to simulate: ");
         while (!scanner.hasNextInt()) {
-            System.out.println("Please enter a valid number.");
-            scanner.next();
+            System.out.println("Please enter a valid number."); // Prośba o wprowadzenie liczby pakietów
+            scanner.next(); // Pomijamy błędne wejście
         }
         int packageCount = scanner.nextInt();
         
         if (packageCount > 0) {
-            simulator = new PackingSimulator(); // Reset simulator
-            simulator.generatePackages(packageCount);
-            simulator.runSimulation();
-            simulator.printStatistics();
+            simulator = new PackingSimulator(); // Resetujemy symulator przed startem nowej symulacji
+            simulator.generatePackages(packageCount); // Generujemy zadaną liczbę pakietów
+            simulator.runSimulation(); // Uruchamiamy symulację pakowania
+            simulator.printStatistics(); // Wyświetlamy statystyki symulacji
         } else {
-            System.out.println("Number of packages must be greater than 0");
+            System.out.println("Number of packages must be greater than 0"); // Komunikat o błędzie przy niepoprawnej liczbie pakietów
         }
     }
 
     private static void displayDetailedStatistics() {
+        // Metoda wyświetlająca szczegółowe statystyki kontenerów oraz niepakowanych pakietów
         if (simulator.getContainers().isEmpty()) {
-            System.out.println("No simulation has been run yet.");
+            System.out.println("No simulation has been run yet."); // Informacja, że nie przeprowadzono żadnej symulacji
             return;
         }
         
         System.out.println("\n=== Detailed Statistics ===");
         System.out.println("Container Details:");
         for (Container container : simulator.getContainers()) {
+            // Dla każdego kontenera wypisujemy id, stopień wykorzystania oraz liczbę pakietów
             System.out.printf("Container %s: %.2f%% utilized, %d packages\n",
                 container.getId(),
                 container.getUtilization(),
@@ -84,7 +91,7 @@ public class App {
         
         System.out.println("\nUnpacked Packages:");
         for (Package pkg : simulator.getPendingPackages()) {
-            System.out.println(pkg.toString());
+            System.out.println(pkg.toString()); // Wypisujemy pakiety, które nie zostały zapakowane
         }
     }
 }
