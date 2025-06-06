@@ -1,91 +1,106 @@
 package org.example;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
 
-import java.util.*;
 
-/**
- * Klasa PackingSimulator służy do symulacji procesu pakowania paczek do kontenerów.
- * Umożliwia generowanie paczek o losowych wymiarach, próbuje je zapakować do istniejących kontenerów
- * lub tworzy nowe kontenery w razie potrzeby. Na koniec wyświetla statystyki symulacji.
- */
 public class PackingSimulator {
-    // Pola klasy: lista kontenerów, lista paczek oczekujących, generator liczb losowych oraz domyślny rozmiar kontenera.
-    private final List<Container> containers;
-    private final List<Package> pendingPackages;
-    private final Random random;
-    private static final double DEFAULT_CONTAINER_SIZE = 100.0;
+    private final List<Container> containers = new ArrayList<>();
+    private final List<Package> pendingPackages = new ArrayList<>();
+    private final Random random = new Random();
 
-    // Konstruktor: inicjalizuje listy oraz obiekt Random.
-    public PackingSimulator() {
-        this.containers = new ArrayList<>();
-        this.pendingPackages = new ArrayList<>();
-        this.random = new Random();
+    private final double containerWidth;
+    private final double containerHeight;
+    private final double containerDepth;
+
+    public PackingSimulator(double width, double height, double depth) {
+        this.containerWidth = width;
+        this.containerHeight = height;
+        this.containerDepth = depth;
     }
 
-    // Generuje paczki o losowych wymiarach (do 50 jednostek) i dodaje je do listy oczekujących.
+    public void runSimulation() {
+        List<Package> toProcess = new ArrayList<>(pendingPackages);
+        pendingPackages.clear();
+
+        for (Package pkg : toProcess) {
+            Container bestFit = containers.stream()
+                .filter(c -> c.canFit(pkg))
+                .min(Comparator.comparingDouble(Container::getRemainingVolume))
+                .orElse(null);
+
+            if (bestFit != null) {
+                bestFit.addPackage(pkg);
+            } else {
+                Container newContainer = new Container("CNT-" + (containers.size() + 1),
+                                                       containerWidth, containerHeight, containerDepth);
+                if (newContainer.addPackage(pkg)) {
+                    containers.add(newContainer);
+                } else {
+                    pendingPackages.add(pkg);
+                }
+            }
+        }
+    }
+
     public void generatePackages(int count) {
         for (int i = 0; i < count; i++) {
-            pendingPackages.add(new Package(
-                "PKG-" + (i + 1),
-                random.nextDouble() * 50,
-                random.nextDouble() * 50,
-                random.nextDouble() * 50
-            ));
+            double w = 0.1 + random.nextDouble() * (containerWidth - 0.1);
+            double h = 0.1 + random.nextDouble() * (containerHeight - 0.1);
+            double d = 0.1 + random.nextDouble() * (containerDepth - 0.1);
+            pendingPackages.add(new Package("PKG-" + (i + 1), w, h, d));
         }
     }
 
-    // Przeprowadza symulację pakowania paczek do dostępnych kontenerów.
-    public void runSimulation() {
-        // Iterujemy po kopii listy, aby uniknąć modyfikacji oryginalnej listy podczas iteracji.
-        for (Package pkg : new ArrayList<>(pendingPackages)) {
-            boolean packed = false;
-            
-            // Próba zapakowania paczki do istniejących kontenerów.
-            for (Container container : containers) {
-                if (container.addPackage(pkg)) {
-                    packed = true;
-                    pendingPackages.remove(pkg); // Usuwamy zapakowaną paczkę z listy
-                    break;
-                }
-            }
-
-            // Jeśli paczka nie zmieściła się w żadnym kontenerze, tworzymy nowy kontener.
-            if (!packed) {
-                Container newContainer = new Container(
-                    "CNT-" + (containers.size() + 1),
-                    DEFAULT_CONTAINER_SIZE,
-                    DEFAULT_CONTAINER_SIZE,
-                    DEFAULT_CONTAINER_SIZE
-                );
-                if (newContainer.addPackage(pkg)) {
-                    containers.add(newContainer); // Dodajemy nowy kontener do listy
-                    pendingPackages.remove(pkg); // Usuwamy paczkę po zapakowaniu
-                }
-            }
-        }
-    }
-
-    // Wyświetla statystyki symulacji: liczbę kontenerów użytych, liczbę paczek nie zapakowanych
-    // oraz średnie wykorzystanie kontenerów.
     public void printStatistics() {
         System.out.println("\n=== Packing Simulation Statistics ===");
-        System.out.println("Total containers used: " + containers.size());
-        System.out.println("Packages not packed: " + pendingPackages.size());
-        
-        double avgUtilization = containers.stream()
-            .mapToDouble(Container::getUtilization)
-            .average()
-            .orElse(0.0);
-        
-        System.out.printf("Average container utilization: %.2f%%\n", avgUtilization);
+        System.out.printf("Standard Container Size: %.2fm x %.2fm x %.2fm%n",
+                containerWidth, containerHeight, containerDepth);
+        int totalPacked = containers.stream().mapToInt(c -> c.getPackages().size()).sum();
+        int total = totalPacked + pendingPackages.size();
+
+        System.out.println("Total Packages: " + total);
+        System.out.println("Containers Used: " + containers.size());
+        System.out.println("Unpacked Packages: " + pendingPackages.size());
+
+        if (!containers.isEmpty()) {
+            System.out.println("\nContainer Utilization:");
+            for (Container c : containers) {
+                System.out.printf("Container %s: %.2f%% used, %d packages%n",
+                    c.getId(), c.getUtilization(), c.getPackages().size());
+            }
+
+            double avgUtilization = containers.stream()
+                .mapToDouble(Container::getUtilization)
+                .average().orElse(0.0);
+            System.out.printf("\nAverage Utilization: %.2f%%%n", avgUtilization);
+        }
+
+        if (!pendingPackages.isEmpty()) {
+            System.out.println("\nWarning: Following packages couldn't be packed:");
+            for (Package pkg : pendingPackages) {
+                System.out.printf("  %s (%.2fm x %.2fm x %.2fm)%n",
+                    pkg.getId(), pkg.getWidth(), pkg.getHeight(), pkg.getDepth());
+            }
+        }
     }
 
-    // Zwraca listę kontenerów użytych podczas symulacji.
+    // Allows manual addition of packages before simulation
+    public void addPackage(Package pkg) {
+        pendingPackages.add(pkg);
+    }
+
     public List<Container> getContainers() {
         return containers;
     }
 
-    // Zwraca listę paczek, które nie zostały zapakowane.
     public List<Package> getPendingPackages() {
         return pendingPackages;
+    }
+
+    public void reset() {
+        containers.clear();
+        pendingPackages.clear();
     }
 }

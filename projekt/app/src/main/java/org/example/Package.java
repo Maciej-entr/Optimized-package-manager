@@ -1,48 +1,59 @@
 package org.example;
+import java.util.ArrayList;
 
+/**
+ * Represents a single package with dimensions and ID.
+ * Immutable after construction.
+ */
 public class Package {
-    // Pola klasy: id i wymiary paczki
     private final String id;
     private final double width;
     private final double height;
     private final double depth;
 
-    // Konstruktor: tworzy paczkę z podanym id i wymiarami
+    /**
+     * Constructs a package with the specified ID and dimensions.
+     * All dimensions must be positive and finite.
+     */
     public Package(String id, double width, double height, double depth) {
-        this.id = id;         // Ustawienie identyfikatora
-        this.width = width;   // Ustawienie szerokości
-        this.height = height; // Ustawienie wysokości
-        this.depth = depth;   // Ustawienie głębokości
+        if (width <= 0 || height <= 0 || depth <= 0 ||
+            Double.isNaN(width) || Double.isNaN(height) || Double.isNaN(depth) ||
+            Double.isInfinite(width) || Double.isInfinite(height) || Double.isInfinite(depth)) {
+            throw new IllegalArgumentException("All dimensions must be positive and finite.");
+        }
+        this.id = id;
+        this.width = width;
+        this.height = height;
+        this.depth = depth;
     }
 
-    // Zwraca identyfikator paczki
-    public String getId() { 
-        return id; 
+    public String getId() { return id; }
+    public double getWidth() { return width; }
+    public double getHeight() { return height; }
+    public double getDepth() { return depth; }
+
+    /**
+     * Returns the volume of the package in cubic meters.
+     */
+    public double getVolume() {
+        return width * height * depth;
     }
 
-    // Zwraca szerokość paczki
-    public double getWidth() { 
-        return width; 
-    }
-
-    // Zwraca wysokość paczki
-    public double getHeight() { 
-        return height; 
-    }
-
-    // Zwraca głębokość paczki
-    public double getDepth() { 
-        return depth; 
-    }
-
-    // Oblicza i zwraca objętość paczki
-    public double getVolume() { 
-        return width * height * depth; 
-    }
-
-    // Przesłonięta metoda toString, która ładnie reprezentuje paczkę
     @Override
     public String toString() {
-        return String.format("Package[id=%s, %.2fx%.2fx%.2f]", id, width, height, depth); 
+        return String.format("Package[id=%s, %.2fx%.2fx%.2f m]", id, width, height, depth);
     }
+
+@Override
+public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof Package)) return false;
+    Package p = (Package) o;
+    return id.equals(p.id);
+}
+
+@Override
+public int hashCode() {
+    return id.hashCode();
+}
 }

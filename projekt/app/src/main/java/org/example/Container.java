@@ -1,37 +1,46 @@
 package org.example;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+/**
+ * Represents a 3D container to hold packages.
+ * Uses simplified volume-based approximation to determine fit.
+ */
 public class Container {
-    // Pola klasy: id, wymiary, lista paczek oraz użyta objętość
     private final String id;
     private final double width;
     private final double height;
     private final double depth;
-    private final List<Package> packages;
-    private double usedVolume;
 
-    // Konstruktor: inicjalizuje kontener z podanymi wymiarami i pustą listą paczek
+    private final List<Package> packages = new ArrayList<>();
+    private double usedVolume = 0;
+
     public Container(String id, double width, double height, double depth) {
         this.id = id;
         this.width = width;
         this.height = height;
         this.depth = depth;
-        this.packages = new ArrayList<>();
-        this.usedVolume = 0;
     }
 
-    // Sprawdza, czy paczka zmieści się w kontenerze na podstawie jej wymiarów
-    public boolean canFit(Package pkg) {
+    /**
+     * Checks if the package dimensions and volume allow it to be placed in this container.
+     * Note: This is a naive volume-based approximation.
+     */
+    public boolean canAccommodate(Package pkg) {
         return pkg.getWidth() <= width &&
                pkg.getHeight() <= height &&
-               pkg.getDepth() <= depth;
+               pkg.getDepth() <= depth &&
+               (usedVolume + pkg.getVolume()) <= getVolume();
     }
 
-    // Próbuje dodać paczkę. Jeśli się mieści, dodaje ją i aktualizuje wykorzystaną objętość
+    /**
+     * Attempts to add a package to the container.
+     * @return true if added successfully, false otherwise.
+     */
     public boolean addPackage(Package pkg) {
-        if (canFit(pkg)) {
+        if (canAccommodate(pkg)) {
             packages.add(pkg);
             usedVolume += pkg.getVolume();
             return true;
@@ -39,13 +48,33 @@ public class Container {
         return false;
     }
 
-    // Oblicza procentowe wykorzystanie kontenera bazując na objętości użytej i całkowitej
-    public double getUtilization() {
-        return usedVolume / (width * height * depth) * 100;
+    public String getId() { return id; }
+    public double getWidth() { return width; }
+    public double getHeight() { return height; }
+    public double getDepth() { return depth; }
+
+    public double getVolume() {
+        return width * height * depth;
     }
 
-    // Zwraca listę paczek znajdujących się w kontenerze
+    public double getUtilization() {
+        return getVolume() == 0 ? 0 : (usedVolume / getVolume()) * 100.0;
+    }
+
+    public double getRemainingVolume() {
+        return getVolume() - usedVolume;
+    }
+
+    /**
+     * Returns an unmodifiable list of packages to ensure immutability.
+     */
     public List<Package> getPackages() {
-        return packages;
+        return Collections.unmodifiableList(packages);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Container[%s] %.2fx%.2fx%.2f, %.2f%% utilized",
+                id, width, height, depth, getUtilization());
     }
 }
