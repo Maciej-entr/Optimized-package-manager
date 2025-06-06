@@ -1,5 +1,7 @@
 package main.java.org.example;
-
+import org.example.Package;
+import org.example.PackingSimulator;
+import org.example.App;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +30,15 @@ public class Container {
      * Checks if the package dimensions and volume allow it to be placed in this container.
      * Note: This is a naive volume-based approximation.
      */
+    public double getCurrentHeight() {
+    if (packages.isEmpty()) {
+        return 0.0;
+    }
+    return packages.stream()
+        .mapToDouble(Package::getHeight)
+        .max()
+        .orElse(0.0);
+}
     public boolean canAccommodate(Package pkg) {
         return pkg.getWidth() <= width &&
                pkg.getHeight() <= height &&
@@ -77,4 +88,5 @@ public class Container {
         return String.format("Container[%s] %.2fx%.2fx%.2f, %.2f%% utilized",
                 id, width, height, depth, getUtilization());
     }
+
 }

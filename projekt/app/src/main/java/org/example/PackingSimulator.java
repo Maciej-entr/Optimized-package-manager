@@ -3,7 +3,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
-
+import org.example.Package;
+import org.example.Container;
+import org.example.App;
 
 public class PackingSimulator {
     private final List<Container> containers = new ArrayList<>();
@@ -30,10 +32,15 @@ public class PackingSimulator {
         pendingPackages.clear();
 
         for (Package pkg : toProcess) {
-            Container bestFit = containers.stream()
-                .filter(c -> c.canAccommodate(pkg))
-                .min(Comparator.comparingDouble(Container::getRemainingVolume))
-                .orElse(null);
+    Container bestFit = containers.stream()
+        .filter(c -> c.canAccommodate(pkg))
+        .min(Comparator.comparingDouble(c -> {
+            // Consider both remaining volume and space efficiency
+            double volumeScore = c.getRemainingVolume();
+            double heightDiff = Math.abs(c.getCurrentHeight() - pkg.getHeight());
+            return volumeScore + heightDiff * 0.5; // Weight both factors
+        }))
+        .orElse(null);
 
             if (bestFit != null) {
                 bestFit.addPackage(pkg);
